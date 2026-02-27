@@ -21,6 +21,7 @@ func NewCmdReview() *cobra.Command {
 		codeReview int
 		verified   int
 		labels     []string
+		comments   []string
 	)
 	cmd := &cobra.Command{
 		Use:   "review <change-id>",
@@ -51,6 +52,11 @@ func NewCmdReview() *cobra.Command {
 					}
 				}
 			}
+			if len(comments) > 0 {
+				cm, err := parseComments(comments)
+				cmdutil.ExitIfError(err)
+				input.Comments = cm
+			}
 			err := client.SetReview(context.Background(), args[0], revision, input)
 			cmdutil.ExitIfError(err)
 			fmt.Println("Review posted.")
@@ -61,5 +67,25 @@ func NewCmdReview() *cobra.Command {
 	cmd.Flags().IntVar(&codeReview, "code-review", 0, "Code-Review score (-2 to +2)")
 	cmd.Flags().IntVar(&verified, "verified", 0, "Verified score (-1 to +1)")
 	cmd.Flags().StringArrayVar(&labels, "label", nil, "Label score (Name=score)")
+	cmd.Flags().StringArrayVarP(&comments, "comment", "c", nil, "Inline comment (file:line:message)")
 	return cmd
+}
+
+func parseComments(raw []string) (map[string][]gerrit.CommentInput, error) {
+	result := make(map[string][]gerrit.CommentInput)
+	for _, s := range raw {
+		parts := strings.SplitN(s, ":", 3)
+		if len(parts) != 3 {
+			return nil, fmt.Errorf("invalid comment format %q: expected file:line:message", s)
+		}
+		line, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return nil, fmt.Errorf("invalid line number in comment %q: %w", s, err)
+		}
+		result[parts[0]] = append(result[parts[0]], gerrit.CommentInput{
+			Line:    line,
+			Message: parts[2],
+		})
+	}
+	return result, nil
 }

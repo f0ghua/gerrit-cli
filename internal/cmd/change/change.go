@@ -6,6 +6,8 @@ import (
 	"github.com/fog/gerrit-cli/internal/cmd/change/abandon"
 	"github.com/fog/gerrit-cli/internal/cmd/change/comments"
 	"github.com/fog/gerrit-cli/internal/cmd/change/diff"
+	"github.com/fog/gerrit-cli/internal/cmd/change/draft"
+	"github.com/fog/gerrit-cli/internal/cmd/change/drafts"
 	"github.com/fog/gerrit-cli/internal/cmd/change/list"
 	"github.com/fog/gerrit-cli/internal/cmd/change/patch"
 	"github.com/fog/gerrit-cli/internal/cmd/change/rebase"
@@ -30,6 +32,8 @@ func NewCmdChange() *cobra.Command {
 		view.NewCmdView(),
 		comments.NewCmdComments(),
 		review.NewCmdReview(),
+		draft.NewCmdDraft(),
+		drafts.NewCmdDrafts(),
 		submit.NewCmdSubmit(),
 		abandon.NewCmdAbandon(),
 		rebase.NewCmdRebase(),

@@ -56,7 +56,8 @@ func runInit(cmd *cobra.Command, args []string) {
 		Username: username,
 		Password: password,
 	})
-	data, err := client.Get(context.Background(), "config/server/version")
+	// Test with an authenticated endpoint to properly detect /a/ prefix support.
+	_, err := client.Get(context.Background(), "accounts/self")
 	if err != nil {
 		// Retry without /a/ prefix (nginx-authed instances)
 		client = gerrit.NewClient(gerrit.Config{
@@ -65,12 +66,18 @@ func runInit(cmd *cobra.Command, args []string) {
 			Password:     password,
 			NoAuthPrefix: true,
 		})
-		data, err = client.Get(context.Background(), "config/server/version")
+		_, err = client.Get(context.Background(), "accounts/self")
 		if err != nil {
 			fmt.Printf("FAILED\n")
 			cmdutil.ExitIfError(fmt.Errorf("connection test failed: %w", err))
 		}
 		noAuthPrefix = true
+	}
+	// Fetch version for display.
+	verClient := client
+	data, err := verClient.Get(context.Background(), "config/server/version")
+	if err != nil {
+		data = []byte("unknown")
 	}
 	version := strings.Trim(string(data), "\"\n")
 	if noAuthPrefix {
